@@ -123,13 +123,26 @@ github.com/pangudashu/memcache/example/example.go
         res, er := mc.Replace("test_key", "new value~", 0, cas) //每次更新操作数据的cas都会变，所以如果这个值在Get后被其它client更新了则返回false，err返回memcache.ErrKeyExists
 
 ###### Delete
+    
+    删除一个元素
+
+    说明：
+    Delete(key string [, cas uint64 ]) (res bool, err error)
+
+    参数：
+    key 要删除的key
+    cas 数据版本号，如果数据在此操作前已被其它客户端更新，则删除失败
+
+    返回值：
+    成功时返回 true，或者在失败时返回 false，如果key不存在err返回 memcache.ErrNotFound
+
 ###### Increment
 ###### Decrement
 ###### Flush
-* Append
-* Prepend
-* Version
-* Noop
+###### Append
+###### Prepend
+###### Version
+###### Noop
 
 
 
