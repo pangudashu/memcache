@@ -42,7 +42,7 @@ github.com/pangudashu/memcache/example/example.go
 
 ### Command List
 * Get
-    
+
     Get(key string, format... interface{})(value interface{}, cas uint64, err error)
     
     value为interface，取具体存储的值需要断言
