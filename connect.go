@@ -2,6 +2,7 @@ package memcache
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/binary"
 	"errors"
 	"io"
@@ -155,8 +156,6 @@ func (this *Connection) delete(key string, cas ...uint64) (res bool, err error) 
 
 func (this *Connection) numberic(opcode opcode_t, key string, args ...interface{}) (res bool, err error) { /*{{{*/
 	var delta = 1
-	var initial = 0
-	var expiration = 0
 	var cas = 0
 
 	switch len(args) {
@@ -164,16 +163,7 @@ func (this *Connection) numberic(opcode opcode_t, key string, args ...interface{
 		delta = args[0].(int)
 	case 2:
 		delta = args[0].(int)
-		initial = args[1].(int)
-	case 3:
-		delta = args[0].(int)
-		initial = args[1].(int)
-		expiration = args[2].(int)
-	case 4:
-		delta = args[0].(int)
-		initial = args[1].(int)
-		expiration = args[2].(int)
-		cas = args[3].(int)
+		cas = args[1].(int)
 	}
 
 	header := &request_header{
@@ -189,8 +179,8 @@ func (this *Connection) numberic(opcode opcode_t, key string, args ...interface{
 	}
 	extra_byte := make([]byte, 0x14)
 	binary.BigEndian.PutUint64(extra_byte[0:8], uint64(delta))
-	binary.BigEndian.PutUint64(extra_byte[8:16], uint64(initial))
-	binary.BigEndian.PutUint32(extra_byte[16:20], uint32(expiration))
+	binary.BigEndian.PutUint64(extra_byte[8:16], 0x0000000000000000 /*uint64(initial)*/)
+	binary.BigEndian.PutUint32(extra_byte[16:20], 0xffffffff /*uint32(expiration)*/)
 
 	if err := this.writeHeader(header); err != nil {
 		return false, err
@@ -614,6 +604,7 @@ func (this *Connection) formatValueFromByte(value_type value_type_t, data []byte
 	case VALUE_TYPE_BYTE:
 		value = data
 	case VALUE_TYPE_INT:
+		data = bytes.Trim(data, " ")
 		s := string(data)
 		value, err = strconv.Atoi(s)
 	case VALUE_TYPE_INT8:

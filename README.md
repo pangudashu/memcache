@@ -137,6 +137,23 @@ github.com/pangudashu/memcache/example/example.go
     成功时返回 true，或者在失败时返回 false，如果key不存在err返回 memcache.ErrNotFound
 
 ###### Increment
+
+    增加数值元素的值,如果key不存在则操作失败
+
+    说明：
+    Increment(key string [, delta int [, cas int ]]) (res bool, err error)
+
+    参数：
+    key   要增加值的元素的key
+    delta 要将元素的值增加的大小,默认1
+    cas   数据版本号，只有当服务端cas没有变化时此操作才成功
+
+    返回值：
+    成功时返回 true，或者在失败时返回 false，如果key不存在err返回memcache.ErrNotFound，如果cas版本号已变err返回memcache.ErrKeyExists
+
+    注意：
+    Increment/Decrement只能操作value类型为int的值，其它任何类型均无法操作。(原因是memcached中在Incr/Decr处理时首先使用strtoull将value转为unsigned long long再进行加减操作，所以只有将数值存为字符串strtoull才能将其转为合法的数值)
+
 ###### Decrement
 ###### Flush
 ###### Append
