@@ -155,11 +155,77 @@ github.com/pangudashu/memcache/example/example.go
     Increment/Decrement只能操作value类型为int的值，其它任何类型均无法操作。(原因是memcached中在Incr/Decr处理时首先使用strtoull将value转为unsigned long long再进行加减操作，所以只有将数值存为字符串strtoull才能将其转为合法的数值)
 
 ###### Decrement
+    
+    减小数值元素的值
+    
+    【说明】
+    Decrement(key string [, delta int [, cas int ]]) (res bool, err error)
+
+    【参数】
+    同Increment
+
 ###### Flush
+    
+    删除缓存中的所有元素
+
+    【说明】
+    Flush([ delay uint32 ]) (res bool, err error)
+
+    【参数】
+    delay 在flush所有元素之前等待的时间（单位秒）
+
+    【返回值】
+    成功时返回 true， 或者在失败时返回 false
+
 ###### Append
+    
+    向已存在string元素后追加数据
+
+    【说明】
+    Append(key string, value string [, cas uint64 ]) (res bool, err error)
+
+    【参数】
+    key   用于存储值的键名
+    value 将要追加的值
+
+    【返回值】
+    成功时返回 false， 或者在失败时返回 false。 如果key不存在err返回memcache.ErrNotFound
+
+    【注意】
+    Append/Prepend只能操作string类型，尽管操作其它类型时也能转化为string，但是将导致数据原来的类型失效，也就是说Append/Prement能够成功，但是Get时将出错
+
 ###### Prepend
+
+    向已存在string元素前追加数据
+
+    【说明】
+    Prepend(key string, value string [, cas uint64 ]) (res bool, err error)
+
+    同Append
+
 ###### Version
-###### Noop
+    
+    获取memcached服务端版本
+
+    【说明】
+    Version() (v string, err error)
 
 
+    【参数】
+    无
 
+    【返回值】
+    memcached version
+
+### 错误编码
+* ErrNotConn     : Can't connect to server
+* ErrNotFound    : Key not found
+* ErrKeyExists   : Key exists
+* ErrInval       : Invalid arguments
+* ErrNotStord    : Item not stored
+* ErrDeltaBadVal : Increment/Decrement on non-numberic value
+* ErrMem         : Out of memery
+* ErrInvalValue  : Unkown value type
+* ErrInvalFormat : Invalid format struct
+* ErrNoFormat    : Format struct empty
+* ErrUnkown      : Unkown error
