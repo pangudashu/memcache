@@ -46,14 +46,14 @@ github.com/pangudashu/memcache/example/example.go
     
     根据key检索一个元素
 
-    说明：
+    【说明】
     Get(key string [, format_struct interface{} ])(value interface{}, cas uint64, err error)
     
-    参数：
+    【参数】
     key    要检索的元素的key
     format 用于存储的value为map、结构体时，返回值将直接反序列化到format
 
-    返回值：
+    【返回值】
     value为interface，取具体存储的值需要断言
     存储的value为map、结构体时,value将返回nil 
     
@@ -73,18 +73,18 @@ github.com/pangudashu/memcache/example/example.go
     
     向一个新的key下面增加一个元素
 
-    说明：
+    【说明】
     Set(key string, value interface{} [, expire ...uint32 ]) (res bool, err error)
 
-    参数：
+    【参数】
     key    用于存储值的键名
     value  存储的值，可以为string、[]byte、int、int8、int16、int32、int64、bool、uint8、uint16、uint32、uint64、float32、float64、map、struct等类型
     expire 过期时间，默认0
 
-    返回值：
+    【返回值】
     设置成功res返回true，err返回nil，否则res返回false，err返回memcache.ErrNotStord
 
-    注意：
+    【注意】
     int类型长度与系统位数相关，所以实际存储转为string，建议尽量使用具体长度的类型：int8、int16、int32、int64替换
 
         //demo
@@ -95,13 +95,13 @@ github.com/pangudashu/memcache/example/example.go
 
     向一个新的key下面增加一个元素,与Set类似，但是如果 key已经在服务端存在，此操作会失败
 
-    说明：
+    【说明】
     Add(key string, value interface{} [, expire uint32 ]) (res bool, err error)
 
-    参数：
+    【参数】
     同Set
 
-    返回值：
+    【返回值】
     同Set。
     如果key已经存在，res返回false，err返回memcache.ErrKeyExists
 
@@ -109,10 +109,10 @@ github.com/pangudashu/memcache/example/example.go
     
     替换已存在key下的元素,类似Set，但是如果服务端不存在key，操作将失败
 
-    说明：
+    【说明】
     Replace(key string, value interface{} [, expire uint64 [, cas uint64 ]]) (res bool, err error)
 
-    参数：
+    【参数】
     key    用于存储值的键名
     value  存储的值
     expire 过期时间
@@ -126,32 +126,32 @@ github.com/pangudashu/memcache/example/example.go
     
     删除一个元素
 
-    说明：
+    【说明】
     Delete(key string [, cas uint64 ]) (res bool, err error)
 
-    参数：
+    【参数】
     key 要删除的key
     cas 数据版本号，如果数据在此操作前已被其它客户端更新，则删除失败
 
-    返回值：
+    【返回值】
     成功时返回 true，或者在失败时返回 false，如果key不存在err返回 memcache.ErrNotFound
 
 ###### Increment
 
     增加数值元素的值,如果key不存在则操作失败
 
-    说明：
+    【说明】
     Increment(key string [, delta int [, cas int ]]) (res bool, err error)
 
-    参数：
+    【参数】
     key   要增加值的元素的key
     delta 要将元素的值增加的大小,默认1
     cas   数据版本号，只有当服务端cas没有变化时此操作才成功
 
-    返回值：
+    【返回值】
     成功时返回 true，或者在失败时返回 false，如果key不存在err返回memcache.ErrNotFound，如果cas版本号已变err返回memcache.ErrKeyExists
 
-    注意：
+    【注意】
     Increment/Decrement只能操作value类型为int的值，其它任何类型均无法操作。(原因是memcached中在Incr/Decr处理时首先使用strtoull将value转为unsigned long long再进行加减操作，所以只有将数值存为字符串strtoull才能将其转为合法的数值)
 
 ###### Decrement
