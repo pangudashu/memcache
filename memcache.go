@@ -4,6 +4,11 @@ type Memcache struct {
 	pool *ConnectionPool
 }
 
+type Server struct {
+	Address string
+	Weight  int
+}
+
 var badTryCnt int = 4
 
 func NewMemcache(address string, args ...int) (mem *Memcache, err error) { /*{{{*/
@@ -28,6 +33,10 @@ func NewMemcache(address string, args ...int) (mem *Memcache, err error) { /*{{{
 		pool: pool,
 	}, nil
 } /*}}}*/
+
+func (this *Memcache) AddServers([]map[string]int) bool {
+	return true
+}
 
 func (this *Memcache) Get(key string, format ...interface{}) (value interface{}, cas uint64, err error) { /*{{{*/
 	var res *response
@@ -201,7 +210,7 @@ func (this *Memcache) Increment(key string, args ...interface{}) (res bool, err 
 func (this *Memcache) Decrement(key string, args ...interface{}) (res bool, err error) { /*{{{*/
 	for i := 0; i < badTryCnt; i++ {
 		conn, e := this.pool.Get()
-		if err != nil {
+		if e != nil {
 			if i == badTryCnt-1 {
 				return false, e
 			} else {
