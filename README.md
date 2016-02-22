@@ -40,7 +40,19 @@ golang版本的memcached客户端，使用二进制协议，支持连接池，�
 ##### Demo
 github.com/pangudashu/memcache/example/example.go
 
-### 命令列表
+### Command List
+* Get
+* Set
+* Add
+* Replace
+* Delete
+* Increment
+* Decrement
+* Flush
+* Append
+* Prepend
+* Version
+* Noop
 
 
 
