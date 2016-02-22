@@ -63,6 +63,18 @@ github.com/pangudashu/memcache/example/example.go
 
 
 ###### Set
+    
+    Set(key string, value interface{}, expire ...uint32) (res bool, err error)
+
+    * value可以为string、[]byte、int、int8、int16、int32、int64、bool、uint8、uint16、uint32、uint64、float32、float64、map、struct等类型
+    * expire过期时间，默认0
+    * 设置成功res返回true，err返回nil，否则res返回false，err返回具体的错误
+
+        //demo
+        var value uint32 = 360000000000
+        mc.Set("test_value", value, 1800)
+
+    * 注意：int类型长度与系统位数相关，所以实际存储转为string，建议尽量使用具体长度的类型：int8、int16、int32、int64替换
 ###### Add
 ###### Replace
 ###### Delete
