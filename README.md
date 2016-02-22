@@ -50,10 +50,6 @@ github.com/pangudashu/memcache/example/example.go
 * err成功返回时为nil
 * format用于存储的value为map、结构体时，返回值将直接反序列化到format，此时value将返回nil 
     
-    
-    
-    
-    
         type User struct {
             //...
         }
