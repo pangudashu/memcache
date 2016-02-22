@@ -42,6 +42,26 @@ github.com/pangudashu/memcache/example/example.go
 
 ### Command List
 * Get
+    
+    Get(key string, format... interface{})(value interface{}, cas uint64, err error)
+    
+    value为interface，取具体存储的值需要断言
+    cas为数据的版本号，用于原子操作，不需要原子操作时可以忽略
+    err成功返回时为nil
+    
+    format用于存储的value为map、结构体时，返回值将直接反序列化到format，此时value将返回nil
+    //demo
+    type User struct {
+        //...
+    }
+
+    var user User
+    if _, _, e := mc.Get("pangudashu_struct", &user); e != nil {
+        fmt.Println(e)
+    } else {
+        fmt.Println(user)
+    }
+
 * Set
 * Add
 * Replace
