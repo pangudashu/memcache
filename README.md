@@ -6,12 +6,12 @@ golang版本的memcached客户端，使用二进制协议，支持连接池，�
 * 支持连接池
 * 存储value支持golang基本数据类型，不需要转换为字符串存储，类型：string、[]byte、int、int8、int16、int32、int64、bool、uint8、uint16、uint32、uint64、float32、float64、map、结构体
 
-### Start
-##### Download
+### 使用
+##### 下载
 
     go get github.com/pangudashu/memcache
 
-##### Import and Use
+##### 导入
 
     package main
 
@@ -37,18 +37,24 @@ golang版本的memcached客户端，使用二进制协议，支持连接池，�
         ...
     }
 
-##### Demo
+##### 示例
 github.com/pangudashu/memcache/example/example.go
 
-### Command List
+### 命令列表
 ###### Get
+    
+    根据key检索一个元素
 
+    说明：
     Get(key string, format... interface{})(value interface{}, cas uint64, err error)
     
-* value为interface，取具体存储的值需要断言
-* cas为数据的版本号，用于原子操作，不需要原子操作时可以忽略
-* err成功返回时为nil
-* format用于存储的value为map、结构体时，返回值将直接反序列化到format，此时value将返回nil 
+    参数：
+    key 要检索的元素的key
+    format 用于存储的value为map、结构体时，返回值将直接反序列化到format
+
+    返回值：
+    value为interface，取具体存储的值需要断言
+    存储的value为map、结构体时,value将返回nil 
     
         type User struct {
             //...
@@ -64,17 +70,27 @@ github.com/pangudashu/memcache/example/example.go
 
 ###### Set
     
+    向一个新的key下面增加一个元素
+
+    说明：
     Set(key string, value interface{}, expire ...uint32) (res bool, err error)
 
-    * value可以为string、[]byte、int、int8、int16、int32、int64、bool、uint8、uint16、uint32、uint64、float32、float64、map、struct等类型
-    * expire过期时间，默认0
-    * 设置成功res返回true，err返回nil，否则res返回false，err返回具体的错误
+    参数：
+    key 用于存储值的键名
+    value 存储的值，可以为string、[]byte、int、int8、int16、int32、int64、bool、uint8、uint16、uint32、uint64、float32、float64、map、struct等类型
+    expire 过期时间，默认0
+
+    返回值：
+    设置成功res返回true，err返回nil，否则res返回false，err返回memcache.ErrNotStord
+
+    注意：
+    int类型长度与系统位数相关，所以实际存储转为string，建议尽量使用具体长度的类型：int8、int16、int32、int64替换
 
         //demo
         var value uint32 = 360000000000
         mc.Set("test_value", value, 1800)
 
-    * 注意：int类型长度与系统位数相关，所以实际存储转为string，建议尽量使用具体长度的类型：int8、int16、int32、int64替换
+
 ###### Add
 ###### Replace
 ###### Delete
