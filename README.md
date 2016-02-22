@@ -41,7 +41,7 @@ golang版本的memcached客户端，使用二进制协议，支持连接池，�
 github.com/pangudashu/memcache/example/example.go
 
 ### Command List
-* Get
+###### Get
 
     Get(key string, format... interface{})(value interface{}, cas uint64, err error)
     
