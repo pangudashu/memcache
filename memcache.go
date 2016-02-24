@@ -45,32 +45,6 @@ func (this *Memcache) AddServers(server_list []*Server) bool {
 		server.pool = open(server.Address, 64, 32)
 	}
 	this.nodes = createServerNode(server_list)
-
-	/*
-		start_time := time.Now()
-
-		rate_server := make(map[*Server]int)
-		weight := 0
-		for _, v := range server_list {
-			rate_server[v] = 0
-			weight += v.Weight
-		}
-
-		test_count := 1000000
-		for i := 0; i < test_count; i++ {
-			key := "qp_test_" + strconv.Itoa(i) + time.Now().String()
-			s := this.nodes.getServerByKey(key)
-			rate_server[s]++
-		}
-
-		for s, i := range rate_server {
-			fmt.Println("Server:", s.Address, "Count:", i, "Rate:", (float32(i)/float32(test_count))*100, "%", "WeightRate:", (float32(s.Weight)/float32(weight))*100, "%")
-		}
-
-		end_time := time.Now()
-		request_time := float64(end_time.UnixNano()-start_time.UnixNano()) / 1000000000
-		fmt.Println(request_time)
-	*/
 	return true
 }
 
