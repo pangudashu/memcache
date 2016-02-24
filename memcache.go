@@ -1,47 +1,86 @@
 package memcache
 
-type Memcache struct {
-	pool *ConnectionPool
-}
+import (
+	"fmt"
+)
 
-type Server struct {
-	Address string
-	Weight  int
+type Memcache struct {
+	pool  *ConnectionPool
+	nodes *Nodes
 }
 
 var badTryCnt int = 4
 
 func NewMemcache(address string, args ...int) (mem *Memcache, err error) { /*{{{*/
-	maxCnt := 128
-	initCnt := 0
+	/*
+		maxCnt := 128
+		initCnt := 0
 
-	switch len(args) {
-	case 1:
-		maxCnt = args[0]
-	case 2:
-		maxCnt = args[0]
-		initCnt = args[1]
-	}
+		switch len(args) {
+		case 1:
+			maxCnt = args[0]
+		case 2:
+			maxCnt = args[0]
+			initCnt = args[1]
+		}
 
-	pool := open(address, maxCnt, initCnt)
+		pool := open(address, maxCnt, initCnt)
 
-	if err != nil {
-		return nil, err
-	}
+		if err != nil {
+			return nil, err
+		}
+	*/
 
 	return &Memcache{
-		pool: pool,
+	//pool: pool,
 	}, nil
 } /*}}}*/
 
-func (this *Memcache) AddServers([]map[string]int) bool {
+func (this *Memcache) AddServers(server_list []*Server) bool {
+	//create connect pool
+	for _, server := range server_list {
+		if server == nil {
+			return false
+		}
+		server.pool = open(server.Address, 64, 32)
+	}
+	this.nodes = createServerNode(server_list)
+
+	/*
+		start_time := time.Now()
+
+		rate_server := make(map[*Server]int)
+		weight := 0
+		for _, v := range server_list {
+			rate_server[v] = 0
+			weight += v.Weight
+		}
+
+		test_count := 1000000
+		for i := 0; i < test_count; i++ {
+			key := "qp_test_" + strconv.Itoa(i) + time.Now().String()
+			s := this.nodes.getServerByKey(key)
+			rate_server[s]++
+		}
+
+		for s, i := range rate_server {
+			fmt.Println("Server:", s.Address, "Count:", i, "Rate:", (float32(i)/float32(test_count))*100, "%", "WeightRate:", (float32(s.Weight)/float32(weight))*100, "%")
+		}
+
+		end_time := time.Now()
+		request_time := float64(end_time.UnixNano()-start_time.UnixNano()) / 1000000000
+		fmt.Println(request_time)
+	*/
 	return true
 }
 
 func (this *Memcache) Get(key string, format ...interface{}) (value interface{}, cas uint64, err error) { /*{{{*/
 	var res *response
+	server := this.nodes.getServerByKey(key)
+	fmt.Println(server.Address)
+
 	for i := 0; i < badTryCnt; i++ {
-		conn, e := this.pool.Get()
+		conn, e := server.pool.Get()
 		if e != nil {
 			if i == badTryCnt-1 {
 				return nil, 0, e
@@ -53,9 +92,9 @@ func (this *Memcache) Get(key string, format ...interface{}) (value interface{},
 		res, err = conn.get(key, format...)
 
 		if err == ErrBadConn {
-			this.pool.Release(conn)
+			server.pool.Release(conn)
 		} else {
-			this.pool.Put(conn)
+			server.pool.Put(conn)
 			break
 		}
 	}
@@ -73,9 +112,10 @@ func (this *Memcache) Set(key string, value interface{}, expire ...uint32) (res 
 	if len(expire) > 0 {
 		timeout = expire[0]
 	}
+	server := this.nodes.getServerByKey(key)
 
 	for i := 0; i < badTryCnt; i++ {
-		conn, e := this.pool.Get()
+		conn, e := server.pool.Get()
 		if e != nil {
 			if i == badTryCnt-1 {
 				return false, e
@@ -87,9 +127,9 @@ func (this *Memcache) Set(key string, value interface{}, expire ...uint32) (res 
 		res, err = conn.store(OP_SET, key, value, timeout, 0)
 
 		if err == ErrBadConn {
-			this.pool.Release(conn)
+			server.pool.Release(conn)
 		} else {
-			this.pool.Put(conn)
+			server.pool.Put(conn)
 			break
 		}
 	}
