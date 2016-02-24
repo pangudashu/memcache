@@ -5,7 +5,7 @@ golang版本的memcached客户端，使用二进制协议，支持分布式，�
 * 支持分布式
 * 与memcached使用二进制协议通信
 * 支持连接池
-* 存储value支持golang基本数据类型，不需要转换为字符串存储，类型：string、[]byte、int、int8、int16、int32、int64、bool、uint8、uint16、uint32、uint64、float32、float64、map、结构体
+* 存储value支持golang基本数据类型：string、[]byte、int、int8、int16、int32、int64、bool、uint8、uint16、uint32、uint64、float32、float64、map、结构体，不需要单独转为string存储
 * Replace、Increment/Decrement、Delete、Append/Prepend命令支持cas原子操作
 
 ### 使用
