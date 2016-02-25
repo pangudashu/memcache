@@ -1,3 +1,15 @@
+/*
+	+----------------------------------------------------------------------+
+	| Memcached Client for Golang                                          |
+	+----------------------------------------------------------------------+
+	| https://github.com/pangudashu/memcache                               |
+	+----------------------------------------------------------------------+
+	| @Author : pangudashu                                                 |
+	| @Email: qp2624@163.com                                               |
+	| @Date: 2016-02-20                                                    |
+	+----------------------------------------------------------------------+
+*/
+
 package main
 
 import (
@@ -21,14 +33,22 @@ type User struct {
 
 func main() {
 
-	maxCnt := 32 //最大连接数
-	initCnt := 0 //初始化连接数
+	//server配置
+	s1 := &memcache.Server{Address: "127.0.0.1:12000", Weight: 50}
+	s2 := &memcache.Server{Address: "127.0.0.1:12001", Weight: 20}
+	s3 := &memcache.Server{Address: "127.0.0.1:12002", Weight: 20}
+	s4 := &memcache.Server{Address: "127.0.0.1:12003", Weight: 10}
+
 	//初始化连接池
-	mc, err := memcache.NewMemcache("127.0.0.1:12000", maxCnt, initCnt)
+	mc, err := memcache.NewMemcache([]*memcache.Server{s1, s2, s3, s4})
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+
+	//设置是否自动剔除无法连接的server，默认不开启(建议开启)
+	//如果开启此选项被踢除的server如果恢复正常将会再次被加入server列表
+	mc.SetRemoveBadServer(true)
 
 	cmd_set(mc)
 	cmd_get(mc)
