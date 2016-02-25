@@ -29,31 +29,12 @@ const (
 	OP_DELETE    opcode_t = 0x04
 	OP_INCREMENT opcode_t = 0x05
 	OP_DECREMENT opcode_t = 0x06
-	//OP_QUIT       opcode_t = 0x07
-	OP_FLUSH opcode_t = 0x08
-	//OP_GETQ       opcode_t = 0x09
-	OP_NOOP    opcode_t = 0x0a
-	OP_VERSION opcode_t = 0x0b
-	OP_GETK    opcode_t = 0x0c
-	//OP_GETKQ      opcode_t = 0x0d
-	OP_APPEND  opcode_t = 0x0e
-	OP_PREPEND opcode_t = 0x0f
-	//OP_STAT       opcode_t = 0x10
-	//OP_SETQ       opcode_t = 0x11
-	//OP_ADDQ       opcode_t = 0x12
-	//OP_REPLACEQ   opcode_t = 0x13
-	//OP_DELETEQ    opcode_t = 0x14
-	//OP_INCREMENTQ opcode_t = 0x15
-	//OP_DECREMENTQ opcode_t = 0x16
-	//OP_QUITQ      opcode_t = 0x17
-	//OP_FLUSHQ     opcode_t = 0x18
-	//OP_APPENDQ    opcode_t = 0x19
-	//OP_PREPENDQ   opcode_t = 0x1a
-	//OP_TOUCH      opcode_t = 0x1c
-	//OP_GAT        opcode_t = 0x1d
-	//OP_GATQ       opcode_t = 0x1e
-	//OP_GATK       opcode_t = 0x23
-	//OP_GATKQ      opcode_t = 0x24
+	OP_FLUSH     opcode_t = 0x08
+	OP_NOOP      opcode_t = 0x0a
+	OP_VERSION   opcode_t = 0x0b
+	OP_GETK      opcode_t = 0x0c
+	OP_APPEND    opcode_t = 0x0e
+	OP_PREPEND   opcode_t = 0x0f
 )
 
 type status_t uint16
