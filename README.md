@@ -1,4 +1,4 @@
-# memcache
+# Memcached Client for Golang
 golang版本的memcached客户端，使用二进制协议，支持分布式，支持连接池，支持多种数据格式
 
 ### 特性
