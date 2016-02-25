@@ -222,11 +222,11 @@ github.com/pangudashu/memcache/example/example.go
     获取memcached服务端版本
 
     【说明】
-    Version() (v string, err error)
+    Version(server *memcache.Server) (v string, err error)
 
 
     【参数】
-    无
+    server server配置结构
 
     【返回值】
     memcached version

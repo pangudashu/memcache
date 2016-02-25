@@ -51,6 +51,8 @@ func main() {
 	mc.SetRemoveBadServer(true)
 
 	cmd_set(mc)
+	cmd_append(mc)
+	cmd_increment(mc)
 	cmd_get(mc)
 
 	//clear pool
@@ -76,7 +78,7 @@ func cmd_set(mc *memcache.Memcache) {
 	fmt.Println(mc.Set("pangudashu_bool", true, 0))                             //bool
 	fmt.Println(mc.Set("pangudashu_string", "[string]this is string~", 0))      //string
 	fmt.Println(mc.Set("pangudashu_bytes", []byte("[byte]this is []byte~"), 0)) //[]byte
-	fmt.Println(mc.Set("pangudashu_int", 123456445, 0))                         //int
+	fmt.Println(mc.Set("pangudashu_int", 1024, 0))                              //int
 	fmt.Println(mc.Set("pangudashu_int8", int8(-128), 0))                       //int8
 	fmt.Println(mc.Set("pangudashu_int16", int16(-3400), 0))                    //int16
 	fmt.Println(mc.Set("pangudashu_int32", int32(-429496729), 0))               //int32
@@ -102,6 +104,23 @@ func cmd_set(mc *memcache.Memcache) {
 	user.List[1002] = "北京2"
 
 	fmt.Println(mc.Set("pangudashu_struct", user, 0)) //struct
+}
+
+func cmd_append(mc *memcache.Memcache) {
+	fmt.Println("\n+----------------------------------[Append/Prepend]------------------------------------+\n")
+
+	fmt.Println(mc.Append("pangudashu_string", "<=后置字符串"))  //string
+	fmt.Println(mc.Prepend("pangudashu_string", "前置字符串=>")) //string
+}
+
+func cmd_increment(mc *memcache.Memcache) {
+	fmt.Println("\n+----------------------------------[Increment/Decrement]------------------------------------+\n")
+	//Increment/Decrement只能操作value类型为int的值，其它任何类型均无法操作。
+	//原因是memcached中在Incr/Decr处理时首先使用strtoull将value转为unsigned long long再进行加减操作，
+	//所以只有将数值存为字符串strtoull才能将其转为合法的数值
+
+	fmt.Println(mc.Increment("pangudashu_int", 100)) //int
+	fmt.Println(mc.Decrement("pangudashu_int", 50))  //int
 }
 
 func cmd_get(mc *memcache.Memcache) {
@@ -147,6 +166,6 @@ func cmd_get(mc *memcache.Memcache) {
 	if _, _, e := mc.Get("pangudashu_struct", &user); e != nil {
 		fmt.Println(e)
 	} else {
-		fmt.Println(user)
+		fmt.Println("获取存储的结构体:\n\t", user)
 	}
 }
