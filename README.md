@@ -2,11 +2,14 @@
 golang版本的memcached客户端，使用二进制协议，支持分布式，支持连接池，支持多种数据格式
 
 ### 特性
-* 支持分布式
+* 支持多server集群
 * 与memcached使用二进制协议通信
 * 支持连接池
 * 存储value支持golang基本数据类型：string、[]byte、int、int8、int16、int32、int64、bool、uint8、uint16、uint32、uint64、float32、float64、map、结构体，不需要单独转为string存储
 * Replace、Increment/Decrement、Delete、Append/Prepend命令支持cas原子操作
+
+### 分布式集群
+默认开启分布式集群，key按照一致性哈希算法分配到各server，当server无法连接时如果设置了SetRemoveBadServer(true)则自动被剔除server列表，等到恢复正常时再重新加入server列表
 
 ### 使用
 ##### 下载
