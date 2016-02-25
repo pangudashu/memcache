@@ -54,7 +54,7 @@ func (this *Connection) get(key string, format ...interface{}) (res *response, e
 		cas:      0x00,
 	}
 	if err := this.writeHeader(header); err != nil {
-		return nil, err
+		return nil, ErrBadConn
 	}
 
 	this.buffered.WriteString(key)
@@ -391,7 +391,6 @@ func (this *Connection) noop() (res bool, err error) { /*{{{*/
 	len, err := this.buffered.Read(b)
 
 	if err == io.EOF || len < 24 {
-		//this.Close()
 		return false, ErrBadConn
 	}
 
@@ -433,7 +432,6 @@ func (this *Connection) version() (v string, err error) { /*{{{*/
 	len, err := this.buffered.Read(b)
 
 	if err == io.EOF || len < 24 {
-		//this.Close()
 		return "", ErrBadConn
 	}
 
@@ -650,6 +648,8 @@ func (this *Connection) formatValueFromByte(value_type value_type_t, data []byte
 } /*}}}*/
 
 func (this *Connection) Close() { /*{{{**/
-	this.c.Close()
-	this.c = nil
+	if this.c != nil {
+		this.c.Close()
+		this.c = nil
+	}
 } /*}}}*/

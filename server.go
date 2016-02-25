@@ -2,7 +2,6 @@ package memcache
 
 import (
 	"crypto/md5"
-	//"fmt"
 	"hash/crc32"
 	"math"
 	"strconv"
@@ -23,14 +22,13 @@ type Server struct {
 }
 
 type Nodes struct {
-	serverList    []*Server          //server列表
 	serverNodeMap map[uint32]*Server //hask_key => Server
 	nodeList      []uint32
 	nodeCnt       int
 }
 
 func createServerNode(servers []*Server) *Nodes { /*{{{*/
-	nodes := &Nodes{serverList: servers}
+	nodes := &Nodes{}
 
 	total_weight := 0
 	for _, v := range servers {
@@ -49,6 +47,11 @@ func createServerNode(servers []*Server) *Nodes { /*{{{*/
 
 	cnt := 0
 	for _, s := range servers {
+		//create connection pool
+		if s.pool == nil {
+			s.pool = open(s.Address, s.MaxConn, s.InitConn)
+		}
+
 		//计算实际分配的虚拟节点数
 		node_cnt := int(math.Ceil(float64(total_node) * (float64(s.Weight) / float64(total_weight))))
 
@@ -132,11 +135,18 @@ func (nodes *Nodes) getServerByKey(key string) *Server { /*{{{*/
 
 	node := nodes.getNodeByHash(hash_key)
 
-	return nodes.serverNodeMap[node]
+	if node == 0 {
+		return nil
+	} else {
+		return nodes.serverNodeMap[node]
+	}
 } /*}}}*/
 
 //折半查找
 func (nodes *Nodes) getNodeByHash(hash_key uint32) (node uint32) { /*{{{*/
+	if nodes.nodeCnt < 1 {
+		return 0
+	}
 	//大于最后一个节点分配给第一个节点
 	if hash_key > nodes.nodeList[nodes.nodeCnt-1] {
 		return nodes.nodeList[0]

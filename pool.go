@@ -82,8 +82,3 @@ func (this *ConnectionPool) Close() {
 		conn.Close()
 	}
 }
-
-//Todo: send heartbeat to keep alive
-func (this *ConnectionPool) HeartBeat() {
-	//
-}
