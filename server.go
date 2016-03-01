@@ -63,7 +63,7 @@ func createServerNode(servers []*Server) *Nodes { /*{{{*/
 				nodes.serverNodeMap[node] = s
 				nodes.nodeList[cnt] = node
 
-				s.nodeList[i*j] = node
+				s.nodeList[i*4+j] = node
 				cnt++
 			}
 		}
