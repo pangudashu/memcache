@@ -95,7 +95,7 @@ func createKetamaHash(key string, i int) []uint32 { /*{{{*/
 
 	hashs := make([]uint32, 4)
 	for n := 0; n < 4; n++ {
-		hashs[n] = (uint32(code_byte[3+n*4]&0xFF) << 24) | (uint32(code_byte[2+n*4]&0xFF) << 16) | (uint32(code_byte[1+n*4]&0xFF) << 0) | uint32(code_byte[0+n*4]&0xFF)
+		hashs[n] = (uint32(code_byte[3+n*4]&0xFF) << 24) | (uint32(code_byte[2+n*4]&0xFF) << 16) | (uint32(code_byte[1+n*4]&0xFF) << 8) | uint32(code_byte[0+n*4]&0xFF)
 	}
 	return hashs
 } /*}}}*/
