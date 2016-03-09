@@ -19,7 +19,12 @@ type serverManager struct {
 	isRmBadServer   bool
 }
 
-var badTryCnt int = 4
+var (
+	badTryCnt       = 4
+	defualtMaxConn  = 128
+	defualtInitConn = 8
+	defualtIdleTime = time.Hour * 2
+)
 
 func NewMemcache(server_list []*Server) (mem *Memcache, err error) { /*{{{*/
 	if server_list == nil {
@@ -34,10 +39,13 @@ func NewMemcache(server_list []*Server) (mem *Memcache, err error) { /*{{{*/
 			return nil, errors.New("Server is nil or address is empty")
 		}
 		if server.MaxConn == 0 {
-			server.MaxConn = 128
+			server.MaxConn = defualtMaxConn
 		}
 		if server.InitConn == 0 {
-			server.InitConn = 8
+			server.InitConn = defualtInitConn
+		}
+		if server.IdleTime == 0 {
+			server.IdleTime = defualtIdleTime
 		}
 		server.isActive = true
 	}
@@ -60,6 +68,12 @@ func (this *Memcache) SetRemoveBadServer(option bool) { /*{{{*/
 	this.manager.badServerNotice = make(chan bool)
 
 	go this.monitorBadServer()
+} /*}}}*/
+
+func (this *Memcache) SetTimeout(dial, read, write time.Duration) { /*{{{*/
+	dialTimeout = dial
+	readTimeout = read
+	writeTimeout = write
 } /*}}}*/
 
 func (this *Memcache) Get(key string, format ...interface{}) (value interface{}, cas uint64, err error) { /*{{{*/

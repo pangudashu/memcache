@@ -2,6 +2,7 @@ package memcache
 
 import (
 	"sync"
+	"time"
 )
 
 //连接池
@@ -10,15 +11,17 @@ type ConnectionPool struct {
 	address  string
 	maxCnt   int
 	totalCnt int
+	idleTime time.Duration
 
 	sync.Mutex
 }
 
-func open(address string, maxCnt int, initCnt int) (pool *ConnectionPool) {
+func open(address string, maxCnt int, initCnt int, idelTime time.Duration) (pool *ConnectionPool) {
 	pool = &ConnectionPool{
-		pool:    make(chan *Connection, maxCnt),
-		address: address,
-		maxCnt:  maxCnt,
+		pool:     make(chan *Connection, maxCnt),
+		address:  address,
+		maxCnt:   maxCnt,
+		idleTime: idelTime,
 	}
 
 	for i := 0; i < initCnt; i++ {
@@ -33,6 +36,24 @@ func open(address string, maxCnt int, initCnt int) (pool *ConnectionPool) {
 }
 
 func (this *ConnectionPool) Get() (conn *Connection, err error) {
+	for {
+		conn, err = this.get()
+
+		if err != nil {
+			return nil, err
+		}
+
+		if conn.lastActiveTime.Add(this.idleTime).UnixNano() > time.Now().UnixNano() {
+			break
+		} else {
+			this.Release(conn)
+		}
+	}
+	conn.lastActiveTime = time.Now()
+	return conn, err
+}
+
+func (this *ConnectionPool) get() (conn *Connection, err error) {
 	select {
 	case conn = <-this.pool:
 		return conn, nil

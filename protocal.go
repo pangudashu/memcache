@@ -51,9 +51,9 @@ const (
 type value_type_t uint32
 
 const (
-	VALUE_TYPE_BYTE    value_type_t = 0x00000000 //0
+	VALUE_TYPE_INT     value_type_t = 0x00000000 //0 /*change Type 0 => int to sure memcached can right deal Incr/Decr*/
 	VALUE_TYPE_BIN     value_type_t = 0x00000001 //1
-	VALUE_TYPE_INT     value_type_t = 0x00000002 //2
+	VALUE_TYPE_BYTE    value_type_t = 0x00000002 //2
 	VALUE_TYPE_INT8    value_type_t = 0x00000004 //4
 	VALUE_TYPE_INT16   value_type_t = 0x00000008 //8
 	VALUE_TYPE_INT32   value_type_t = 0x00000010 //16
@@ -95,6 +95,7 @@ type response_header struct {
 }
 
 type response struct {
-	header *response_header
-	body   interface{}
+	header   *response_header
+	bodyByte []byte
+	body     interface{}
 }

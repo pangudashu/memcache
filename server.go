@@ -5,6 +5,7 @@ import (
 	"hash/crc32"
 	"math"
 	"strconv"
+	"time"
 )
 
 const (
@@ -16,6 +17,7 @@ type Server struct {
 	Weight   int
 	MaxConn  int
 	InitConn int
+	IdleTime time.Duration
 	isActive bool
 	pool     *ConnectionPool
 	nodeList []uint32
@@ -49,7 +51,7 @@ func createServerNode(servers []*Server) *Nodes { /*{{{*/
 	for _, s := range servers {
 		//create connection pool
 		if s.pool == nil {
-			s.pool = open(s.Address, s.MaxConn, s.InitConn)
+			s.pool = open(s.Address, s.MaxConn, s.InitConn, s.IdleTime)
 		}
 
 		//计算实际分配的虚拟节点数

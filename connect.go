@@ -9,12 +9,20 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Connection struct {
-	c        net.Conn
-	buffered bufio.ReadWriter
+	c              net.Conn
+	buffered       bufio.ReadWriter
+	lastActiveTime time.Time
 }
+
+var (
+	dialTimeout  time.Duration
+	writeTimeout time.Duration
+	readTimeout  time.Duration
+)
 
 func connect(address string) (conn *Connection, err error) { /*{{{*/
 	var network string
@@ -24,7 +32,12 @@ func connect(address string) (conn *Connection, err error) { /*{{{*/
 		network = "tcp"
 	}
 	var nc net.Conn
-	nc, err = net.Dial(network, address)
+
+	if dialTimeout > 0 {
+		nc, err = net.DialTimeout(network, address, dialTimeout)
+	} else {
+		nc, err = net.Dial(network, address)
+	}
 	if err != nil {
 		return nil, ErrNotConn
 	}
@@ -38,7 +51,50 @@ func newConnection(c net.Conn) *Connection { /*{{{*/
 			bufio.NewReader(c),
 			bufio.NewWriter(c),
 		),
+		lastActiveTime: time.Now(),
 	}
+} /*}}}*/
+
+func (this *Connection) readResponse() (*response, error) { /*{{{*/
+	b := make([]byte, 24)
+
+	if readTimeout > 0 {
+		this.c.SetReadDeadline(time.Now().Add(readTimeout))
+	}
+
+	if _, err := this.buffered.Read(b); err != nil {
+		//if err == io.EOF {
+		return nil, ErrBadConn
+		//} else {
+		//	return nil, err
+		//}
+	}
+
+	response_header := this.parseHeader(b)
+
+	if response_header.magic != MAGIC_RES {
+		return nil, errors.New("invalid magic")
+	}
+
+	res := &response{header: response_header}
+
+	if response_header.bodylen > 0 {
+		if readTimeout > 0 {
+			this.c.SetReadDeadline(time.Now().Add(readTimeout))
+		}
+
+		res.bodyByte = make([]byte, response_header.bodylen)
+		io.ReadFull(this.buffered, res.bodyByte)
+	}
+
+	return res, nil
+} /*}}}*/
+
+func (this *Connection) flushBufferToServer() error { /*{{{*/
+	if writeTimeout > 0 {
+		this.c.SetWriteDeadline(time.Now().Add(writeTimeout))
+	}
+	return this.buffered.Flush()
 } /*}}}*/
 
 func (this *Connection) get(key string, format ...interface{}) (res *response, err error) { /*{{{*/
@@ -54,56 +110,35 @@ func (this *Connection) get(key string, format ...interface{}) (res *response, e
 		cas:      0x00,
 	}
 	if err := this.writeHeader(header); err != nil {
-		return nil, ErrBadConn
-	}
-
-	this.buffered.WriteString(key)
-	if err := this.buffered.Flush(); err != nil {
 		return nil, err
 	}
 
-	b := make([]byte, 24)
+	this.buffered.WriteString(key)
 
-	len, err := this.buffered.Read(b)
-
-	if err == io.EOF || len < 24 {
+	if err := this.flushBufferToServer(); err != nil {
 		return nil, ErrBadConn
 	}
 
-	//response
-	response_header := this.parseHeader(b)
-
-	if response_header.magic != MAGIC_RES {
-		return nil, errors.New("invalid magic")
+	resp, err := this.readResponse()
+	if err != nil {
+		return resp, err
 	}
 
-	var body []byte
-
-	if response_header.bodylen > 0 {
-		body = make([]byte, response_header.bodylen)
-		io.ReadFull(this.buffered, body)
+	if err := this.checkResponseError(resp.header.status); err != nil {
+		return resp, err
 	}
 
-	if err := this.checkResponseError(response_header.status); err != nil {
-		return &response{header: response_header}, err
-	}
-
-	if response_header.bodylen > 0 {
-		flags := binary.BigEndian.Uint32(body[:response_header.extlen])
-
-		res_value, err := this.formatValueFromByte(value_type_t(flags), body[response_header.extlen:], format...)
-
+	if resp.header.bodylen > 0 {
+		flags := binary.BigEndian.Uint32(resp.bodyByte[:resp.header.extlen])
+		res_value, err := this.formatValueFromByte(value_type_t(flags), resp.bodyByte[resp.header.extlen:], format...)
 		if err != nil {
 			res_value = nil
 		}
 
-		res = &response{
-			header: response_header,
-			body:   res_value, /*string(body[response_header.extlen:])*/
-		}
-		return res, err
+		resp.body = res_value
+		return resp, err
 	} else {
-		return &response{header: response_header}, errors.New("unkown error")
+		return resp, errors.New("unkown error")
 	}
 } /*}}}*/
 
@@ -129,25 +164,16 @@ func (this *Connection) delete(key string, cas ...uint64) (res bool, err error) 
 	}
 	this.buffered.Write([]byte(key))
 
-	this.buffered.Flush()
-	b := make([]byte, 24)
-
-	len, err := this.buffered.Read(b)
-
-	if err == io.EOF || len < 24 {
-		//this.Close()
+	if err := this.flushBufferToServer(); err != nil {
 		return false, ErrBadConn
 	}
 
-	response_header := this.parseHeader(b)
-
-	var body []byte
-	if response_header.bodylen > 0 {
-		body = make([]byte, response_header.bodylen)
-		io.ReadFull(this.buffered, body)
+	resp, err := this.readResponse()
+	if err != nil {
+		return false, err
 	}
 
-	if err := this.checkResponseError(response_header.status); err != nil {
+	if err := this.checkResponseError(resp.header.status); err != nil {
 		return false, err
 	}
 
@@ -180,7 +206,7 @@ func (this *Connection) numberic(opcode opcode_t, key string, args ...interface{
 	extra_byte := make([]byte, 0x14)
 	binary.BigEndian.PutUint64(extra_byte[0:8], uint64(delta))
 	binary.BigEndian.PutUint64(extra_byte[8:16], 0x0000000000000000 /*uint64(initial)*/)
-	binary.BigEndian.PutUint32(extra_byte[16:20], 0xffffffff /*uint32(expiration)*/)
+	binary.BigEndian.PutUint32(extra_byte[16:20], 0x00000000 /*uint32(expiration) If the expiration value is all one-bits (0xffffffff), the operation will fail with NOT_FOUND*/)
 
 	if err := this.writeHeader(header); err != nil {
 		return false, err
@@ -189,26 +215,16 @@ func (this *Connection) numberic(opcode opcode_t, key string, args ...interface{
 	this.buffered.Write(extra_byte)
 	this.buffered.Write([]byte(key))
 
-	if err := this.buffered.Flush(); err != nil {
-		return false, err
-	}
-
-	b := make([]byte, 24)
-
-	len, err := this.buffered.Read(b)
-	if err == io.EOF || len < 24 {
+	if err := this.flushBufferToServer(); err != nil {
 		return false, ErrBadConn
 	}
 
-	response_header := this.parseHeader(b)
-
-	var body []byte
-	if response_header.bodylen > 0 {
-		body = make([]byte, response_header.bodylen)
-		io.ReadFull(this.buffered, body)
+	resp, err := this.readResponse()
+	if err != nil {
+		return false, err
 	}
 
-	if err := this.checkResponseError(response_header.status); err != nil {
+	if err := this.checkResponseError(resp.header.status); err != nil {
 		return false, err
 	}
 
@@ -245,24 +261,16 @@ func (this *Connection) store(opcode opcode_t, key string, value interface{}, ti
 	this.buffered.Write([]byte(key))
 	this.buffered.Write(val)
 
-	this.buffered.Flush()
-	b := make([]byte, 24)
-
-	len, err := this.buffered.Read(b)
-
-	if err == io.EOF || len < 24 {
+	if err := this.flushBufferToServer(); err != nil {
 		return false, ErrBadConn
 	}
 
-	response_header := this.parseHeader(b)
-
-	var body []byte
-	if response_header.bodylen > 0 {
-		body = make([]byte, response_header.bodylen)
-		io.ReadFull(this.buffered, body)
+	resp, err := this.readResponse()
+	if err != nil {
+		return false, err
 	}
 
-	if err := this.checkResponseError(response_header.status); err != nil {
+	if err := this.checkResponseError(resp.header.status); err != nil {
 		return false, err
 	}
 
@@ -292,24 +300,16 @@ func (this *Connection) appends(opcode opcode_t, key string, value string, cas .
 	}
 	this.buffered.Write([]byte(key + value))
 
-	this.buffered.Flush()
-	b := make([]byte, 24)
-
-	len, err := this.buffered.Read(b)
-
-	if err == io.EOF || len < 24 {
+	if err := this.flushBufferToServer(); err != nil {
 		return false, ErrBadConn
 	}
 
-	response_header := this.parseHeader(b)
-
-	var body []byte
-	if response_header.bodylen > 0 {
-		body = make([]byte, response_header.bodylen)
-		io.ReadFull(this.buffered, body)
+	resp, err := this.readResponse()
+	if err != nil {
+		return false, err
 	}
 
-	if err := this.checkResponseError(response_header.status); err != nil {
+	if err := this.checkResponseError(resp.header.status); err != nil {
 		return false, err
 	}
 
@@ -343,25 +343,16 @@ func (this *Connection) flush(delay ...uint32) (res bool, err error) { /*{{{*/
 
 	this.buffered.Write(extra_byte)
 
-	this.buffered.Flush()
-	b := make([]byte, 24)
-
-	len, err := this.buffered.Read(b)
-
-	if err == io.EOF || len < 24 {
-		//this.Close()
+	if err := this.flushBufferToServer(); err != nil {
 		return false, ErrBadConn
 	}
 
-	response_header := this.parseHeader(b)
-
-	var body []byte
-	if response_header.bodylen > 0 {
-		body = make([]byte, response_header.bodylen)
-		io.ReadFull(this.buffered, body)
+	resp, err := this.readResponse()
+	if err != nil {
+		return false, err
 	}
 
-	if err := this.checkResponseError(response_header.status); err != nil {
+	if err := this.checkResponseError(resp.header.status); err != nil {
 		return false, err
 	}
 
@@ -385,24 +376,16 @@ func (this *Connection) noop() (res bool, err error) { /*{{{*/
 		return false, err
 	}
 
-	this.buffered.Flush()
-	b := make([]byte, 24)
-
-	len, err := this.buffered.Read(b)
-
-	if err == io.EOF || len < 24 {
+	if err := this.flushBufferToServer(); err != nil {
 		return false, ErrBadConn
 	}
 
-	response_header := this.parseHeader(b)
-
-	var body []byte
-	if response_header.bodylen > 0 {
-		body = make([]byte, response_header.bodylen)
-		io.ReadFull(this.buffered, body)
+	resp, err := this.readResponse()
+	if err != nil {
+		return false, err
 	}
 
-	if err := this.checkResponseError(response_header.status); err != nil {
+	if err := this.checkResponseError(resp.header.status); err != nil {
 		return false, err
 	}
 
@@ -426,29 +409,21 @@ func (this *Connection) version() (v string, err error) { /*{{{*/
 		return "", err
 	}
 
-	this.buffered.Flush()
-	b := make([]byte, 24)
-
-	len, err := this.buffered.Read(b)
-
-	if err == io.EOF || len < 24 {
+	if err := this.flushBufferToServer(); err != nil {
 		return "", ErrBadConn
 	}
 
-	response_header := this.parseHeader(b)
-
-	var body []byte
-	if response_header.bodylen > 0 {
-		body = make([]byte, response_header.bodylen)
-		io.ReadFull(this.buffered, body)
-	}
-
-	if err := this.checkResponseError(response_header.status); err != nil {
+	resp, err := this.readResponse()
+	if err != nil {
 		return "", err
 	}
 
-	if response_header.bodylen > 0 {
-		return string(body), nil
+	if err := this.checkResponseError(resp.header.status); err != nil {
+		return "", err
+	}
+
+	if resp.header.bodylen > 0 {
+		return string(resp.bodyByte), nil
 	} else {
 		return "", nil
 	}

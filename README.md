@@ -27,7 +27,15 @@ golang版本的memcached客户端，使用二进制协议，支持分布式，�
 
     func main(){
         
-        //server配置
+        /**
+         * server配置
+         * Address  string          //host:port
+         * Weight   int             //权重        
+         * InitConn int:            //初始化连接数 < MaxCnt
+         * MaxConn  int:            //最大连接数
+         * IdleTime time.Duration:  //空闲连接有效期
+         */
+
         s1 := &memcache.Server{Address: "127.0.0.1:12000", Weight: 50}
         s2 := &memcache.Server{Address: "127.0.0.1:12001", Weight: 20}
         s3 := &memcache.Server{Address: "127.0.0.1:12002", Weight: 20}
@@ -43,6 +51,8 @@ golang版本的memcached客户端，使用二进制协议，支持分布式，�
         //设置是否自动剔除无法连接的server，默认不开启(建议开启)
         //如果开启此选项被踢除的server如果恢复正常将会再次被加入server列表
         mc.SetRemoveBadServer(true)
+        //设置连接、读写超时
+        mc.SetTimeout(time.Second*2, time.Second, time.Second)
 
         mc.Set("test_key",true)
         fmt.Println(mc.Get("test_key"))
