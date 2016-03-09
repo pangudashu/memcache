@@ -173,7 +173,7 @@ github.com/pangudashu/memcache/example/example.go
     cas   数据版本号，只有当服务端cas没有变化时此操作才成功
 
     【返回值】
-    成功时返回 true，或者在失败时返回 false，如果key不存在err返回memcache.ErrNotFound，如果cas版本号已变err返回memcache.ErrKeyExists
+    成功时返回 true，或者在失败时返回 false，如果key不存在则初始化为0，如果cas版本号已变err返回memcache.ErrKeyExists
 
     【注意】
     Increment/Decrement只能操作value类型为int的值，其它任何类型均无法操作。(原因是memcached中在Incr/Decr处理时首先使用strtoull将value转为unsigned long long再进行加减操作，所以只有将数值存为字符串strtoull才能将其转为合法的数值)
