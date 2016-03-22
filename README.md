@@ -11,6 +11,83 @@ golang版本的memcached客户端，使用二进制协议，支持分布式，�
 ### 分布式集群
 默认开启分布式集群，key按照一致性哈希算法分配到各server，当server无法连接时如果设置了SetRemoveBadServer(true)则自动被剔除server列表，等到恢复正常时再重新加入server列表
 
+### 性能
+与github.com/bradfitz/gomemcache/memcache项目(beego cache用的这个)比较，测试方式：启动一个http服务，每次请求调用一次memcached的Get操作。[测试脚本example/pangudashu-Vs-bradfitz.go](https://github.com/pangudashu/memcache/blob/master/example/pangudashu-Vs-bradfitz.go)
+
+用ab分别测试请求: 
+    ab -c 200 -n 10000 http://127.0.0.1:9955/bradfitz_foo
+    ab -c 200 -n 10000 http://127.0.0.1:9955/pangudashu_foo
+
+github.com/bradfitz/gomemcache/memcache结果：
+
+    Document Path:          /bradfitz_foo
+    Document Length:        295 bytes
+
+    Concurrency Level:      200
+    Time taken for tests:   1.982 seconds
+    Complete requests:      10000
+    Failed requests:        0
+    Write errors:           0
+    Total transferred:      4135782 bytes
+    HTML transferred:       2954130 bytes
+    Requests per second:    5046.27 [#/sec] (mean)
+    Time per request:       39.633 [ms] (mean)
+    Time per request:       0.198 [ms] (mean, across all concurrent requests)
+    Transfer rate:          2038.11 [Kbytes/sec] received
+
+    Connection Times (ms)
+        min  mean[+/-sd] median   max
+        Connect:        0    4  40.2      1    1006
+        Processing:     0   33  16.6     31     251
+        Waiting:        0   31  16.2     29     251
+        Total:          0   36  43.4     33    1039
+
+    Percentage of the requests served within a certain time (ms)
+        50%     33
+        66%     40
+        75%     45
+        80%     48
+        90%     56
+        95%     64
+        98%     73
+        99%     79
+    100%   1039 (longest request)
+
+github.com/pangudashu/memcache结果：
+
+    Document Path:          /pangudashu_foo
+    Document Length:        295 bytes
+
+    Concurrency Level:      200
+    Time taken for tests:   1.140 seconds
+    Complete requests:      10000
+    Failed requests:        0
+    Write errors:           0
+    Total transferred:      4144455 bytes
+    HTML transferred:       2960325 bytes
+    Requests per second:    8771.33 [#/sec] (mean)
+    Time per request:       22.802 [ms] (mean)
+    Time per request:       0.114 [ms] (mean, across all concurrent requests)
+    Transfer rate:          3550.04 [Kbytes/sec] received
+
+    Connection Times (ms)
+        min  mean[+/-sd] median   max
+        Connect:        0    4  41.3      2    1003
+        Processing:     0   15   9.9     13     218
+        Waiting:        0   13   9.5     11     211
+        Total:          0   19  42.5     16    1024
+
+    Percentage of the requests served within a certain time (ms)
+        50%     16
+        66%     19
+        75%     22
+        80%     24
+        90%     29
+        95%     34
+        98%     40
+        99%     46
+    100%   1024 (longest request)
+
 ### 使用
 ##### 下载
 
@@ -63,7 +140,7 @@ golang版本的memcached客户端，使用二进制协议，支持分布式，�
     }
 
 ##### 示例
-github.com/pangudashu/memcache/example/example.go
+[example/example.go](https://github.com/pangudashu/memcache/blob/master/example/example.go)
 
 ### 命令列表
 ###### Get
