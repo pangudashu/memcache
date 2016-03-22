@@ -15,6 +15,7 @@ golang版本的memcached客户端，使用二进制协议，支持分布式，�
 与github.com/bradfitz/gomemcache/memcache项目(beego cache用的这个)比较，测试方式：启动一个http服务，每次请求调用一次memcached的Get操作。[测试脚本example/pangudashu-Vs-bradfitz.go](https://github.com/pangudashu/memcache/blob/master/example/pangudashu-Vs-bradfitz.go)
 
 用ab分别测试请求: 
+
     ab -c 200 -n 10000 http://127.0.0.1:9955/bradfitz_foo
     ab -c 200 -n 10000 http://127.0.0.1:9955/pangudashu_foo
 
