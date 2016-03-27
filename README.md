@@ -12,14 +12,14 @@ golang版本的memcached客户端，使用二进制协议，支持分布式，�
 默认开启分布式集群，key按照一致性哈希算法分配到各server，当server无法连接时如果设置了SetRemoveBadServer(true)则自动被剔除server列表，等到恢复正常时再重新加入server列表
 
 ### 性能
-与github.com/bradfitz/gomemcache/memcache项目(beego cache用的这个)比较，测试方式：启动一个http服务，每次请求调用一次memcached的Get操作。[测试脚本example/pangudashu-Vs-bradfitz.go](https://github.com/pangudashu/memcache/blob/master/example/pangudashu-Vs-bradfitz.go)
+与[github.com/bradfitz/gomemcache](https://github.com/bradfitz/gomemcache)项目(beego cache用的这个)比较，测试方式：启动一个http服务，每次请求调用一次memcached的Get操作。[测试脚本example/pangudashu-Vs-bradfitz.go](https://github.com/pangudashu/memcache/blob/master/example/pangudashu-Vs-bradfitz.go)
 
 用ab分别测试请求: 
 
     ab -c 200 -n 10000 http://127.0.0.1:9955/bradfitz_foo
     ab -c 200 -n 10000 http://127.0.0.1:9955/pangudashu_foo
 
-github.com/bradfitz/gomemcache/memcache结果：
+github.com/bradfitz/gomemcache结果：
 
     Document Path:          /bradfitz_foo
     Document Length:        295 bytes
