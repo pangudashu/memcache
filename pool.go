@@ -61,22 +61,20 @@ func (this *ConnectionPool) get() (conn *Connection, err error) {
 	}
 
 	this.Lock()
+	defer this.Unlock()
 
 	if this.totalCnt >= this.maxCnt {
 		//阻塞，直到有可用连接
 		conn = <-this.pool
-		this.Unlock()
 		return conn, nil
 	}
 
 	//create new connect
 	conn, err = connect(this.address)
 	if err != nil {
-		this.Unlock()
 		return nil, err
 	}
 	this.totalCnt++
-	this.Unlock()
 
 	return conn, nil
 }
