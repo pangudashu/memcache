@@ -84,7 +84,10 @@ func (this *Connection) readResponse() (*response, error) { /*{{{*/
 		}
 
 		res.bodyByte = make([]byte, response_header.bodylen)
-		io.ReadFull(this.buffered, res.bodyByte)
+        _, err := io.ReadFull(this.buffered, res.bodyByte)
+        if err != nil {
+            return nil, ErrBadConn
+        }
 	}
 
 	return res, nil
